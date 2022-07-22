@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>这是标题</title>
+    <link rel="shortcut icon" href="imgs/bitbug_favicon.ico" type="image/x-icon" />
+</head>
+<body>
+<div id="app">
+    <!--标题栏按钮-->
+    <el-row>
+        <h1>{{user.nickname}},欢迎您
+        <el-button type="primary" round @click="dialogVisible3 = true">修改个人信息</el-button>
+        <el-button type="warning" round @click="skip">查找用户</el-button>
+        <el-button type="danger" round @click="exitU">退出登录</el-button>
+        </h1>
+    </el-row>
+
+    <el-divider content-position="center">这是一个分割线</el-divider>
+
+    <!--修改用户信息的对话框表单-->
+    <el-dialog
+            title="修改个人信息"
+            :visible.sync="dialogVisible3"
+            width="30%"
+    >
+
+        <el-form ref="form" :model="user" label-width="80px">
+            <el-form-item label="昵称" >
+                <el-input
+                        v-model="user.nickname"
+                        :disabled="true">
+                </el-input>
+            </el-form-item>
+            <el-form-item label="用户名">
+                <el-input
+                        v-model="user.username"
+                        :disabled="true">
+                </el-input>
+            </el-form-item>
+            <el-form-item label="爱好">
+                <el-input v-model="user.hobby"></el-input>
+            </el-form-item>
+            <el-form-item label="地区">
+                <el-input v-model="user.location"></el-input>
+            </el-form-item>
+            <el-form-item>
+                <el-button type="primary" @click="updateUser" >提交</el-button>
+                <el-button @click="dialogVisible3 = false">取消</el-button>
+            </el-form-item>
+        </el-form>
+    </el-dialog>
+
+    <!--搜索表单-->
+    <el-form :inline="true" :model="article2" class="demo-form-inline">
+        <el-form-item label="标题">
+            <el-input v-model="article2.title" placeholder="标题"></el-input>
+        </el-form-item>
+        <el-form-item label="内容">
+            <el-input v-model="article2.content" placeholder="内容"></el-input>
+        </el-form-item>
+        <el-form-item label="作者">
+            <el-input v-model="article2.nickname" placeholder="作者"></el-input>
+        </el-form-item>
+        <el-form-item label="标签">
+            <el-input v-model="article2.label" placeholder="标签">
+<!--                <el-option label="古诗" value="古诗"></el-option>-->
+<!--                <el-option label="古词" value="古词"></el-option>-->
+            </el-input>
+        </el-form-item>
+        <el-form-item>
+            <el-button type="primary" @click="onSubmit">查询</el-button>
+        </el-form-item>
+    </el-form>
+
+    <!--按钮-->
+    <el-row>
+        <el-button type="primary" plain @click="downloadA">批量下载</el-button>
+        <el-button type="success" plain @click="dialogVisible = true">写文章</el-button>
+        <el-button plain @click="selectAll()">查看全部文章</el-button>
+        <el-button type="info" plain @click="selectByNickname">发布过的文章</el-button>
+        <el-button type="warning" plain @click="selectByCollection">收藏的文章</el-button>
+    </el-row>
+
+    <!--添加文章的对话框表单-->
+    <el-dialog
+            title="写文章"
+            :visible.sync="dialogVisible"
+            width="30%"
+            >
+
+        <el-form ref="form" :model="article" label-width="80px">
+            <el-form-item label="标题">
+                <el-input v-model="article.title"></el-input>
+            </el-form-item>
+            <el-form-item label="内容">
+                <el-input type="textarea" v-model="article.content"></el-input>
+            </el-form-item>
+            <el-form-item label="标签">
+                <el-input v-model="article.label"></el-input>
+            </el-form-item>
+            <el-form-item>
+                <el-button type="primary" @click="addArticle" >提交</el-button>
+                <el-button @click="dialogVisible = false">取消</el-button>
+            </el-form-item>
+        </el-form>
+    </el-dialog>
+
+    <!--表格-->
+    <template>
+        <el-table
+                :data="tableData"
+                border
+                style="width: 100%"
+                @selection-change="handleSelectionChange">
+            <el-table-column
+                    type="selection"
+                    width="55"
+                    align="center"
+                    >
+            </el-table-column>
+            <el-table-column
+                    type="index"
+                    :index="indexMethod"
+                    width="50"
+                    align="center">
+            </el-table-column>
+
+            <el-table-column
+                    prop="title"
+                    label="标题"
+                    align="center"
+                    >
+                <template slot-scope="scope">
+                    <el-button @click="detail(scope.row)" type="primary" style="margin-left: 16px;">
+                        <span>{{scope.row.title}}</span>
+                    </el-button>
+                </template>
+            </el-table-column>
+            <el-table-column
+                    prop="content"
+                    label="内容"
+                    align="center"
+                    width="700">
+            </el-table-column>
+            <el-table-column
+                    prop="nickname"
+                    label="作者"
+                    align="center"
+                    >
+            </el-table-column>
+            <el-table-column
+                    prop="label"
+                    label="标签"
+                    align="center">
+            </el-table-column>
+            <el-table-column
+                    label="操作"
+                    align="center">
+                <template slot-scope="scope">
+                <el-row>
+                    <el-button type="warning" @click="open(scope.$index,scope.row)">收藏文章</el-button>
+                </el-row>
+                </template>
+            </el-table-column>
+        </el-table>
+    </template>
+
+    <!--点击文章标题查看详细内容-->
+    <el-drawer
+            title="详细内容"
+            :visible.sync="drawer"
+            :with-header="true">
+        <el-input
+                type="textarea"
+                autosize
+                v-model="detailContent">
+        </el-input>
+        <el-button type="warning" @click="openC2">收藏文章</el-button>
+    </el-drawer>
+
+    <!--分页工具条-->
+    <el-pagination
+            @size-change="handleSizeChange"
+            @current-change="handleCurrentChange"
+            :current-page="currentPage"
+            :page-sizes="[10, 20, 30, 40]"
+            :page-size="pageSize"
+            layout="total, sizes, prev, pager, next, jumper"
+            :total="totalCount">
+    </el-pagination>
+
+</div>
+
+<script src="js/vue.js"></script>
+<script src="element-ui/lib/index.js"></script>
+<script src="js/axios-0.18.0.js"></script>
+<link rel="stylesheet" href="element-ui/lib/theme-chalk/index.css">
+
+<script>
+
+    new Vue({
+        el:"#app",
+        mounted(){
+            //当页面加载完成后，发送异步请求，获取数据
+            this.selectAll();
+            //获取用户数据
+            this.getUser();
+        },
+        methods:{
+            //批量下载的方法
+            downloadA(){
+                for(let i=0;i<this.multipleSelection.length;i++){
+                    let selectionElement = this.multipleSelection[i];
+                    this.selectedIds[i] = selectionElement.id;
+                }
+                var _this = this;
+                axios({
+                    method:"post",
+                    url:"http://localhost:8080/LastDemo/article/downloadA",
+                    data:_this.selectedIds
+                }).then(function (resp) {
+                    if(resp.data === "success"){
+                        _this.$message({
+                            showClose: true,
+                            message: '恭喜你，下载成功',
+                            type: 'success'
+                        });
+                    }
+                })
+            },
+            //退出登录的方法
+            exitU(){
+              var _this = this;
+              axios({
+                  method:"get",
+                  url:"http://localhost:8080/LastDemo/user/exit"
+              }).then(function (resp) {
+                  if(resp.data == "success"){
+                      //给出提示
+                      _this.$message({
+                          showClose: true,
+                          message: '退出成功',
+                          type: 'success'
+                      });
+                      //跳转页面
+                      location.href = "http://localhost:8080/LastDemo/login.html"
+                  }
+              })
+            },
+            //跳转到用户表单的方法
+            skip(){
+                location.href = "http://localhost:8080/LastDemo/userSpace.html"
+            },
+            //获取用户的方法
+            getUser(){
+                var _this = this;
+                axios({
+                    method:"get",
+                    url:"http://localhost:8080/LastDemo/user/getUser"
+                }).then(function (resp) {
+                    _this.user = resp.data;
+                })
+            },
+            //修改用户个人信息的方法
+            updateUser(){
+                var _this = this;
+                axios({
+                    method:"post",
+                    url:"http://localhost:8080/LastDemo/user/updateU",
+                    data:_this.user
+                }).then(function (resp) {
+                    if(resp.data === "success"){
+                        //关闭对话框
+                        _this.dialogVisible3 = false;
+                        //给出成功提示
+                        _this.$message({
+                            showClose: true,
+                            message: '恭喜你，修改成功',
+                            type: 'success'
+                        });
+                    }
+                })
+
+            },
+            //查看收藏的文章的方法
+            selectByCollection(){
+                var _this = this;
+                var uid = this.user.id;
+                axios({
+                    method:"get",
+                    url:"http://localhost:8080/LastDemo/article/selectByPageAndId?currentPage="+_this.currentPage+"&pageSize="+_this.pageSize+"&uid="+uid,
+                }).then(function (resp) {
+                    //设置表格数据
+                    _this.tableData = resp.data.rows;
+                    //设置总记录数
+                    _this.totalCount = resp.data.totalCount;
+                })
+            },
+            //确认收藏后执行的方法
+            collection(index,row){
+                var _this = this;
+                var uid = this.user.id;
+                var aid = row.id;
+                axios({
+                    method:"get",
+                    url:"http://localhost:8080/LastDemo/collection/addC?uid="+uid+"&aid="+aid
+                }).then(function (resp) {
+                    if(resp.data == "success"){
+                        //给出成功提示
+                        _this.$message({
+                            showClose: true,
+                            message: '恭喜你，收藏成功',
+                            type: 'success'
+                        });
+                    }
+                })
+            },
+            //点击收藏按钮后执行的方法
+            open(index,row) {
+                this.$confirm('是否确定收藏?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    this.collection(index,row);
+                }).catch(() => {
+                    this.$message({
+                        type: 'info',
+                        message: '已取消收藏'
+                    });
+                });
+            },
+            //点击详细里的收藏按钮后执行的方法
+            openC2() {
+                this.$confirm('是否确定收藏?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    this.collection2();
+                }).catch(() => {
+                    this.$message({
+                        type: 'info',
+                        message: '已取消收藏'
+                    });
+                });
+            },
+            collection2(){
+                var _this = this;
+                var uid = this.user.id;
+                var aid = this.collectionId;
+                axios({
+                    method:"get",
+                    url:"http://localhost:8080/LastDemo/collection/addC?uid="+uid+"&aid="+aid
+                }).then(function (resp) {
+                    if(resp.data == "success"){
+                        //给出成功提示
+                        _this.$message({
+                            showClose: true,
+                            message: '恭喜你，收藏成功',
+                            type: 'success'
+                        });
+                    }
+                })
+            },
+            //点击标题查看详细内容的回显数据
+            detail(row){
+                this.drawer = true;
+                this.detailContent = row.content;
+                this.collectionId = row.id;
+            },
+            //条件查询分页的方法
+            selectByCondition(){
+                var _this = this;
+                axios({
+                    method:"post",
+                    url:"http://localhost:8080/LastDemo/article/selectByPageAndCondition?currentPage="+_this.currentPage+"&pageSize="+_this.pageSize,
+                    data:_this.article2
+                }).then(function (resp) {
+                    //设置表格数据
+                    _this.tableData = resp.data.rows;
+                    //设置总记录数
+                    _this.totalCount = resp.data.totalCount;
+                })
+            },
+            //查询分页的方法
+            selectAll(){
+                var _this = this;
+                axios({
+                    method:"get",
+                    url:"http://localhost:8080/LastDemo/article/selectByPage?currentPage="+_this.currentPage+"&pageSize="+_this.pageSize,
+                }).then(function (resp) {
+                    //设置表格数据
+                    _this.tableData = resp.data.rows;
+                    //设置总记录数
+                    _this.totalCount = resp.data.totalCount;
+                })
+            },
+            //查看自己发布过的文章的方法
+            selectByNickname(){
+                var _this = this;
+                var nickname = this.user.nickname;
+                axios({
+                    method:"get",
+                    url:"http://localhost:8080/LastDemo/article/selectByPageAndNickname?currentPage="+_this.currentPage+"&pageSize="+_this.pageSize+"&nickname="+nickname,
+                }).then(function (resp) {
+                    //设置表格数据
+                    _this.tableData = resp.data.rows;
+                    //设置总记录数
+                    _this.totalCount = resp.data.totalCount;
+                })
+            },
+            //修改index的方法
+            indexMethod(index){
+                return index + 10 * (this.currentPage - 1) + 1;
+            },
+            //提交搜索执行的方法
+            onSubmit() {
+                this.selectByCondition();
+            },
+            //提交写文章表单后执行的方法
+            addArticle() {
+                var _this = this;
+                axios({
+                    method:"post",
+                    url:"http://localhost:8080/LastDemo/article/addA",
+                    data:_this.article
+                }).then(function (resp) {
+                    if(resp.data == "success"){
+                        //添加成功
+                        //关闭窗口
+                        _this.dialogVisible = false;
+                        //重新查询数据
+                        _this.selectAll();
+                        //给出成功提示框
+                        _this.$message({
+                            showClose: true,
+                            message: '恭喜你，添加成功',
+                            type: 'success'
+                        });
+                    }
+                })
+            },
+            //复选框选择后执行的方法
+            handleSelectionChange(val) {
+                this.multipleSelection = val;
+            },
+            //分页的方法1
+            handleSizeChange(val) {
+                //重新设置分页展示的条数
+                this.pageSize = val;
+                //重新查询
+                this.selectAll();
+            },
+            //分页的方法2
+            handleCurrentChange(val) {
+                //重新设置页码
+                this.currentPage = val;
+                //重新查询
+                this.selectAll();
+            }
+        },
+        data() {
+            return {
+                //收藏的id
+                collectionId:'',
+                //得到用户的信息
+                user:{
+                    id:'',
+                    nickname: '',
+                    username: '',
+                    password:'',
+                    hobby: '',
+                    location: '' ,
+                },
+                //查看详细内容是否关闭的窗口
+                drawer: false,
+                detailContent:'',
+                //上传文件
+                fileList: [],
+                //每页显示的文章数
+                pageSize:10,
+                //文章总记录数
+                totalCount:100,
+                //当前页码
+                currentPage: 1,
+                //添加文章对话框是否展示的标记
+                dialogVisible: false,
+                //修改文章对话框是否展示的标记
+                dialogVisible2: false,
+                //修改用户信息对话框是否展示的标记
+                dialogVisible3:false,
+                //article数据之改文章和写文章的数据
+                article: {
+                    id:'',
+                    title: '',
+                    content: '',
+                    nickname: '',
+                    label: '' ,
+                },
+                //article数据之查询文章的数据
+                article2:{
+                    id:'',
+                    title: '',
+                    content: '',
+                    nickname: '',
+                    label: '' ,
+                },
+                //复选框选中数据集合
+                multipleSelection: [],
+                //获取复选框选中数据的id
+                selectedIds:[],
+                //表格数据
+                tableData: [{
+                    title: '诀别书',
+                    content: '朱弦断，明镜缺，朝露晞，芳时歇，白头吟，伤离别，努力加餐勿念妾，锦水汤汤，与君长诀！',
+                    nickname: 'horse',
+                    label: '古诗'
+                },{
+                    title: '诀别书',
+                    content: '朱弦断，明镜缺，朝露晞，芳时歇，白头吟，伤离别，努力加餐勿念妾，锦水汤汤，与君长诀！',
+                    nickname: 'horse',
+                    label: '古诗'
+                }, {
+                    title: '诀别书',
+                    content: '朱弦断，明镜缺，朝露晞，芳时歇，白头吟，伤离别，努力加餐勿念妾，锦水汤汤，与君长诀！',
+                    nickname: 'horse',
+                    label: '古诗'
+                }]
+            }
+        }
+    })
+</script>
+</body>
+</html>

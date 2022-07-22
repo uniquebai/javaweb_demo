@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>欢迎注册</title>
+    <link href="css/register.css" rel="stylesheet">
+    <link rel="shortcut icon" href="imgs/bitbug_favicon.ico" type="image/x-icon" />
+    <!--制作的图标，使用href关联，仅仅需要更改href的内容  -->
+</head>
+<body>
+<meta http-equiv="Access-Control-Allow-Origin" content="*">
+
+<div class="form-div">
+    <div class="reg-content">
+        <h1>欢迎注册</h1>
+        <span>已有帐号？</span> <a href="login.html">登录</a>
+    </div>
+<!--    <form id="reg-form" action="/LastDemo/user/add" method="post">-->
+    <span id="tip" class="err_msg" style="display: none">注册失败，请联系管理员</span>
+    <form action="" method="post">
+
+        <table>
+
+            <tr>
+                <td>用户名</td>
+                <td class="inputs">
+                    <input name="username" type="text" id="username">
+                    <br>
+                    <span id="username_err" class="err_msg" style="display: none">用户名已存在</span>
+                </td>
+            </tr>
+
+            <tr>
+                <td>昵称</td>
+                <td class="inputs">
+                    <input name="nickname" type="text" id="nickname">
+                    <br>
+                    <span id="nickname_err" class="err_msg" style="display: none">昵称已存在</span>
+                </td>
+            </tr>
+
+            <tr>
+                <td>密码</td>
+                <td class="inputs">
+                    <input name="password" type="password" id="password">
+                    <br>
+                    <span id="password_err" class="err_msg" style="display: none">密码格式有误</span>
+                </td>
+            </tr>
+
+            <tr>
+                <td>爱好</td>
+                <td class="inputs">
+                    <input name="hobby" type="text" id="hobby">
+                    <br>
+                </td>
+            </tr>
+
+            <tr>
+                <td>所在地</td>
+                <td class="inputs">
+                    <input name="location" type="text" id="location">
+                    <br>
+                </td>
+            </tr>
+
+        </table>
+
+        <div class="buttons">
+            <input value="注 册" type="button" id="reg_btn">
+        </div>
+        <br class="clear">
+    </form>
+
+</div>
+
+<script src="js/axios-0.18.0.js"></script>
+<script>
+    //给用户名输入框绑定失去焦点事件
+    document.getElementById("username").onblur = function () {
+        //2.发送Ajax请求
+        //获取用户名的值
+        var username = this.value;
+
+        //2.1.创建核心对象
+        var xhttp;
+        if(window.XMLHttpRequest){
+            xhttp = new XMLHttpRequest();
+        }else {
+            xhttp = new ActiveXObject("Microsoft.XMLHTTP");
+        }
+        xhttp.open("GET","http://localhost:8080/LastDemo/user/selectByName?username="+username)
+        xhttp.send();
+        xhttp.onreadystatechange = function () {
+            if (this.readyState == 4 && this.status == 200) {
+                // alert(this.responseText);
+                //判断
+                if (this.responseText == "true") {
+                    //用户名已存在，显示提示信息
+                    document.getElementById("username_err").style.display = '';
+                } else {
+                    //用户名不存在，清除提示信息
+                    document.getElementById("username_err").style.display = 'none';
+                }
+            }
+        };
+    }
+
+    //给昵称输入框绑定失去焦点事件
+    document.getElementById("nickname").onblur = function () {
+        //2.发送Ajax请求
+        //获取用户名的值
+        var nickname = this.value;
+
+        //2.1.创建核心对象
+        var xhttp;
+        if(window.XMLHttpRequest){
+            xhttp = new XMLHttpRequest();
+        }else {
+            xhttp = new ActiveXObject("Microsoft.XMLHTTP");
+        }
+        xhttp.open("GET","http://localhost:8080/LastDemo/user/judgeNickname?nickname="+nickname)
+        xhttp.send();
+        xhttp.onreadystatechange = function () {
+            if (this.readyState == 4 && this.status == 200) {
+                // alert(this.responseText);
+                //判断
+                if (this.responseText === "true") {
+                    //用户名已存在，显示提示信息
+                    document.getElementById("nickname_err").style.display = '';
+                } else {
+                    //用户名不存在，清除提示信息
+                    document.getElementById("nickname_err").style.display = 'none';
+                }
+            }
+        };
+    }
+
+    //注册提交
+    document.getElementById("reg_btn").onclick = function () {
+        //2.发送Ajax请求
+        //获取用户名的值
+        var formData = {
+            nickname:"",
+            username:"",
+            password:"",
+            hobby:"",
+            location:""
+        };
+        formData.nickname = document.getElementById("nickname").value;
+        formData.username = document.getElementById("username").value;
+        formData.password = document.getElementById("password").value;
+        formData.hobby = document.getElementById("hobby").value;
+        formData.location = document.getElementById("location").value;
+
+        //2.1.创建核心对象
+        axios({
+            method:"post",
+            url:"http://localhost:8080/LastDemo/user/addF",
+            data:formData
+        }).then(function (resp) {
+            // 判断响应数据是否为success
+            if(resp.data == "success"){
+                alert("注册成功!请登录~");
+                location.href = "http://localhost:8080/LastDemo/login.html"
+            } else {
+                document.getElementById("tip").style.display = '';
+            }
+        })
+    }
+</script>
+</body>
+</html>
